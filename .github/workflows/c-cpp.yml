@@ -54,29 +54,29 @@ jobs:
     runs-on: windows-latest
     strategy:
       matrix:
-        # TODO: msvc needs vcpkg support
-        compiler: [mingw] # , msvc ] # CHANGE: Choose between a compiler, you don't need boths
+        compiler: [mingw, msvc] # CHANGE: Choose mingw64 or msvc (with vcpkg)
         arch: [amd64]
-        precision: [32, 64]
+        precision: [32, 64] # pd double and single float
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      # ──────────────────────────────────────
-      - if: matrix.compiler == 'msvc'
-        name: Set up Visual Studio Build Tools
-        uses: microsoft/setup-msbuild@v2
-        # TODO: Add vcpkg support
-      # ──────────────────────────────────────
       - if: matrix.compiler == 'mingw'
         name: Set up Msys2
         uses: msys2/setup-msys2@v2
         with:
           msystem: mingw64
+          update: false
           install: make mingw-w64-x86_64-gcc mingw64/mingw-w64-x86_64-cmake mingw-w64-x86_64-fftw
           # Add here dynamic libraries that you use (ex. fftw3, gsl, ...). 
           # Search for the name in https://packages.msys2.org/queue
-          update: false
-      # ──────────────────────────────────────
+      - if: matrix.compiler == 'msvc'
+        name: Install vcpkg
+        run: |
+          git clone https://github.com/microsoft/vcpkg.git
+          cd vcpkg
+          .\bootstrap-vcpkg.bat
+          .\vcpkg integrate install
+          .\vcpkg install [library-name]
       - name: Install winget
         uses: Cyberboss/install-winget@v1
       - name: Install PureData Float 32
