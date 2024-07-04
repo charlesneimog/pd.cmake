@@ -102,8 +102,7 @@ if(NOT PD_SOURCES_PATH)
             HINTS ${PDBINDIR})
         find_path(PD_HEADER_PATH m_pd.h PATHS ${PD_SOURCES_PATH})
         if(NOT PD_HEADER_PATH)
-            message(
-                FATAL_ERROR "<m_pd.h> not found in C:\\Program Files\\Pd\\src, is Pd installed?")
+            message(FATAL_ERROR "<m_pd.h> not found in C:\\Program Files\\Pd\\src, is Pd installed?")
         endif()
 
     elseif(APPLE)
@@ -113,18 +112,12 @@ if(NOT PD_SOURCES_PATH)
                 get_filename_component(PD_SOURCES_PATH "${app}/Contents/Resources/src/" ABSOLUTE)
             endforeach()
         else()
-            message(
-                FATAL_ERROR
-                    "PD_SOURCES_PATH not set and no Pd.app found in /Applications, is Pd installed?"
-            )
+            message(FATAL_ERROR "PD_SOURCES_PATH not set and no Pd.app found in /Applications, is Pd installed?")
         endif()
 
         find_path(PD_HEADER_PATH m_pd.h PATHS ${PD_SOURCES_PATH})
         if(NOT PD_HEADER_PATH)
-            message(
-                FATAL_ERROR
-                    "<m_pd.h> not found in /Applications/Pd.app/Contents/Resources/src/, is Pd installed?"
-            )
+            message(FATAL_ERROR "<m_pd.h> not found in /Applications/Pd.app/Contents/Resources/src/, is Pd installed?")
         endif()
         message(STATUS "PD_SOURCES_PATH not set, using ${PD_SOURCES_PATH}")
 
@@ -152,7 +145,7 @@ endif()
 macro(set_pd_external_path EXTERNAL_PATH)
     message(
         DEPRECATION
-            "set_pd_external_path was removed, you can set PDLIBDIR and run cmake with '-DPD_INSTALL_LIBS=ON' instead"
+            "set_pd_external_path was removed, you can set PDLIBDIR and run, for example, 'make install -c build' to install the externals"
     )
 endmacro(set_pd_external_path)
 
@@ -172,11 +165,6 @@ function(pd_add_datafile OBJ_TARGET DATA_FILE)
     if(${OBJ_TARGET} MATCHES "~$")
         string(REGEX REPLACE "~$" "_tilde" OBJ_TARGET ${OBJ_TARGET})
     endif()
-
-    if(OBJ_TARGET STREQUAL PROJECT_NAME)
-
-    endif()
-
     foreach(DATA_FILE ${DATA_FILE})
         if(IS_DIRECTORY ${DATA_FILE})
             install(DIRECTORY ${DATA_FILE} DESTINATION ${PDLIBDIR}/${PROJECT_NAME})
@@ -184,7 +172,6 @@ function(pd_add_datafile OBJ_TARGET DATA_FILE)
             install(FILES ${DATA_FILE} DESTINATION ${PDLIBDIR}/${PROJECT_NAME})
         endif()
     endforeach()
-
 endfunction(pd_add_datafile)
 
 # ──────────────────────────────────────
@@ -227,10 +214,7 @@ macro(pd_set_lib_ext OBJ_TARGET_NAME)
         endif()
 
         if(NOT PD_EXTENSION)
-            message(
-                FATAL_ERROR
-                    "Not possible to determine the extension of the library, please set PD_EXTENSION"
-            )
+            message(FATAL_ERROR "Not possible to determine the extension of the library, please set PD_EXTENSION")
         endif()
         set_target_properties(${OBJ_TARGET_NAME} PROPERTIES SUFFIX ${PD_EXTENSION})
     endif()
@@ -238,11 +222,19 @@ endmacro(pd_set_lib_ext)
 
 # ──────────────────────────────────────
 function(pd_add_external PD_EXTERNAL_NAME EXTERNAL_SOURCES)
-
     set(BOOLEAN_ARGS) # No args for now
     set(ONE_ARGS TARGET) # Define optional arg for TARGET
     set(MULTI_ARGS CXX_FLAGS C_FLAGS LINK_LIBRARIES) # Define multi args, CXX_FLAGS C_FLAGS
     cmake_parse_arguments(PD_EXTERNAL "${BOOLEAN_ARGS}" "${ONE_ARGS}" "${MULTI_ARGS}" ${ARGN})
+
+    # Default flags
+    add_definitions(-DPD)
+
+    # Check is PROJECT_NAME is defined or is equal ""
+    if(PROJECT_NAME STREQUAL "Project" OR "${PROJECT_NAME}" STREQUAL "")
+        message(FATAL_ERROR "PROJECT_NAME is not defined, please define using 'project(lib_name)'")
+    endif()
+    message(STATUS "Adding External: ${PD_EXTERNAL_NAME} for project ${PROJECT_NAME}")
 
     # Warning case external name contains ~ and TARGET IS NOT DEFINED
     if(${PD_EXTERNAL_NAME} MATCHES "~$" AND "${PD_EXTERNAL_TARGET}" STREQUAL "")
@@ -260,8 +252,7 @@ function(pd_add_external PD_EXTERNAL_NAME EXTERNAL_SOURCES)
 
     if(EMSCRIPTEN OR PD_BUILD_STATIC_OBJECTS)
         add_library(${OBJ_TARGET_NAME} STATIC ${EXTERNAL_SOURCES})
-        set_target_properties(${OBJ_TARGET_NAME} PROPERTIES OUTPUT_NAME ${PD_EXTERNAL_NAME}
-        )
+        set_target_properties(${OBJ_TARGET_NAME} PROPERTIES OUTPUT_NAME ${PD_EXTERNAL_NAME})
         set_property(GLOBAL APPEND PROPERTY ${PROJECT_NAME}_STATIC_LIBRARIES ${OBJ_TARGET_NAME})
     else()
         add_library(${OBJ_TARGET_NAME} SHARED ${EXTERNAL_SOURCES})
@@ -314,7 +305,6 @@ function(pd_add_external PD_EXTERNAL_NAME EXTERNAL_SOURCES)
     endif()
 
     pd_add_datafile(${PROJECT_NAME} ${CMAKE_BINARY_DIR}/${PD_EXTERNAL_NAME}${PD_EXTENSION})
-
 endfunction(pd_add_external)
 
 # ──────────────────────────────────────
@@ -338,12 +328,9 @@ function(add_pd_external PROJECT_NAME EXTERNAL_NAME EXTERNAL_SOURCES)
 
     foreach(OUTPUTCONFIG ${CMAKE_CONFIGURATION_TYPES})
         string(TOUPPER ${OUTPUTCONFIG} OUTPUTCONFIG)
-        set_target_properties(${PROJECT_NAME} PROPERTIES LIBRARY_OUTPUT_DIRECTORY_${OUTPUTCONFIG}
-                                                         ${CMAKE_BINARY_DIR})
-        set_target_properties(${PROJECT_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY_${OUTPUTCONFIG}
-                                                         ${CMAKE_BINARY_DIR})
-        set_target_properties(${PROJECT_NAME} PROPERTIES ARCHIVE_OUTPUT_DIRECTORY_${OUTPUTCONFIG}
-                                                         ${CMAKE_BINARY_DIR})
+        set_target_properties(${PROJECT_NAME} PROPERTIES LIBRARY_OUTPUT_DIRECTORY_${OUTPUTCONFIG} ${CMAKE_BINARY_DIR})
+        set_target_properties(${PROJECT_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY_${OUTPUTCONFIG} ${CMAKE_BINARY_DIR})
+        set_target_properties(${PROJECT_NAME} PROPERTIES ARCHIVE_OUTPUT_DIRECTORY_${OUTPUTCONFIG} ${CMAKE_BINARY_DIR})
     endforeach(OUTPUTCONFIG CMAKE_CONFIGURATION_TYPES)
 
     if(WIN32)
