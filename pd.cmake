@@ -252,8 +252,7 @@ function(pd_add_external PD_EXTERNAL_NAME EXTERNAL_SOURCES)
 
     strip_trailing_dot(pdx "${PD_EXTENSION}")
     if(NOT PD_BUILD_STATIC_OBJECTS)
-        install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${PD_EXTERNAL_NAME}.${pdx}
-                DESTINATION ${PD_LIB_DIR}/${PROJECT_NAME})
+        pd_add_datafile("${OBJ_TARGET_NAME}" "$<TARGET_FILE:${OBJ_TARGET_NAME}>")
     endif()
 
 endfunction(pd_add_external)
