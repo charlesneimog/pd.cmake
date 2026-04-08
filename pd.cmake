@@ -152,8 +152,6 @@ function(pd_add_external PD_EXTERNAL_NAME EXTERNAL_SOURCES)
         set(PD_DEST "${CMAKE_BINARY_DIR}/${PROJECT_NAME}")
     endif()
 
-    message(WARNING "CMAKE_CXX_COMPILER_ID: ${CMAKE_CXX_COMPILER_ID}")
-
     add_custom_command(
         TARGET ${OBJ_TARGET_NAME}
         POST_BUILD
@@ -192,9 +190,7 @@ function(pd_add_external PD_EXTERNAL_NAME EXTERNAL_SOURCES)
         endif()
         target_link_options(${OBJ_TARGET_NAME} PUBLIC -undefined suppress -flat_namespace)
         target_link_libraries(${OBJ_TARGET_NAME} PUBLIC c)
-        # elseif(WIN32 AND (MINGW OR )) # Windows (MinGW)
     elseif(WIN32 AND MINGW)
-        message(WARNING "pd.cmake Using MINGW")
         target_compile_definitions(${OBJ_TARGET_NAME} PUBLIC MSW NT)
         if(CMAKE_SIZEOF_VOID_P EQUAL 8) # x86_64
             target_compile_definitions(${OBJ_TARGET_NAME} PUBLIC PD_LONGINTTYPE=__int64)
@@ -212,7 +208,7 @@ function(pd_add_external PD_EXTERNAL_NAME EXTERNAL_SOURCES)
         else()
             target_link_libraries(${OBJ_TARGET_NAME} PUBLIC "${PDBINDIR}/pd.dll")
         endif()
-        # elseif(MSVC)
+        set_target_properties(${OBJ_TARGET_NAME} PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
     elseif(MSVC OR (WIN32 AND CMAKE_CXX_COMPILER_ID STREQUAL "Clang"))
         message(WARNING "pd.cmake Using MSVC")
         target_compile_definitions(${OBJ_TARGET_NAME} PUBLIC MSW NT)
@@ -220,7 +216,7 @@ function(pd_add_external PD_EXTERNAL_NAME EXTERNAL_SOURCES)
             target_compile_definitions(${OBJ_TARGET_NAME} PUBLIC PD_LONGINTTYPE=__int64)
         endif()
         # MSVC does not use -march/-msse flags like GCC Use /arch instead if needed
-        set_target_properties(${OBJ_TARGET_NAME} PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS OFF)
+        set_target_properties(${OBJ_TARGET_NAME} PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
         if(PD_FLOATSIZE EQUAL 64)
             target_link_libraries(${OBJ_TARGET_NAME} PUBLIC "${PDBINDIR}/pd64.lib")
         else()
