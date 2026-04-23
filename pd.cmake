@@ -176,13 +176,16 @@ function(pd_add_external PD_EXTERNAL_NAME EXTERNAL_SOURCES)
     target_include_directories(${OBJ_TARGET_NAME} PUBLIC ${PD_SOURCES_PATH}) # Add Pd Includes
 
     # fix this
-    if(UNIX AND NOT APPLE) # Linux
+    if(UNIX
+       AND NOT APPLE
+       AND NOT EMSCRIPTEN) # Linux
         target_compile_definitions(${OBJ_TARGET_NAME} PUBLIC UNIX)
-        target_compile_options(${OBJ_TARGET_NAME} PUBLIC -fPIC)
         target_link_options(${OBJ_TARGET_NAME} PUBLIC -rdynamic -fPIC -Wl,-rpath,\$ORIGIN
                             -Wl,--enable-new-dtags)
         target_link_libraries(${OBJ_TARGET_NAME} PUBLIC c m stdc++)
-
+    elseif(EMSCRIPTEN) # Emscripten
+        target_compile_definitions(${OBJ_TARGET_NAME} PUBLIC UNIX)
+        target_link_options(${OBJ_TARGET_NAME} PUBLIC -rdynamic -fPIC)
     elseif(APPLE) # macOS
         target_compile_definitions(${OBJ_TARGET_NAME} PUBLIC UNIX MACOSX)
         if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
